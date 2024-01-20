@@ -1,0 +1,52 @@
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  funcappname: 'timertriggerfileshare'
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build and Deploy Function App
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - bash: |
+        if [ -f extensions.csproj ]
+        then
+            dotnet build extensions.csproj --output ./bin
+        fi
+        displayName: 'Build extensions'
+
+    - task: UsePythonVersion@0
+      displayName: 'Use Python 3.x'
+      inputs:
+        disableDownloadFromRegistry: true
+
+    - bash: |
+        python -m venv worker_venv
+        source worker_venv/bin/activate
+        pip install setuptools
+        pip install -r requirements.txt
+        displayName: 'Install Application Dependencies'
+
+    - task: FuncToolsInstaller@0
+      displayName: 'Install func tools - latest'
+
+    - task: AzureCLI@2
+      displayName: 'Azure CLI '
+      inputs:
+        azureSubscription: ARMserviceconnection
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az --version
+          func azure functionapp publish $(funcappname) --nozip --python
+        addSpnToEnvironment: true
