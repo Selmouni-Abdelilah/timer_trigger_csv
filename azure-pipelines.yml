@@ -10,7 +10,7 @@ variables:
   vmImageName: 'ubuntu-latest'
 
 stages:
-- stage: Build and Deploy Function App
+- stage: Build
   displayName: Build and push stage
   jobs:
   - job: Build
@@ -18,13 +18,6 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - bash: |
-        if [ -f extensions.csproj ]
-        then
-            dotnet build extensions.csproj --output ./bin
-        fi
-        displayName: 'Build extensions'
-
     - task: UsePythonVersion@0
       displayName: 'Use Python 3.x'
       inputs:
